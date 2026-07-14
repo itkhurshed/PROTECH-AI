@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Business Automation — ProTech AI</title>
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body data-page="automation.html">
+
+<header id="appHeader"></header>
+
+<main>
+  <div class="section" style="max-width:760px;">
+    <div class="section-head">
+      <p class="eyebrow">⚙️ Business Automation</p>
+      <h2 style="margin-top:14px;">Let ProTech AI run the busywork</h2>
+      <p id="activeCount"></p>
+    </div>
+
+    <div id="automationRows"></div>
+  </div>
+</main>
+
+<footer id="appFooter"></footer>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/common.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const STORAGE_KEY = "ps_automation_state";
+
+    function loadState() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+        if (saved) return saved;
+      } catch (e) {}
+      const defaults = {};
+      AUTOMATION_LIST.forEach((a) => (defaults[a.name] = a.defaultOn));
+      return defaults;
+    }
+
+    let state = loadState();
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function render() {
+      const activeCount = Object.values(state).filter(Boolean).length;
+      document.getElementById("activeCount").textContent = `${activeCount} of ${AUTOMATION_LIST.length} automations active`;
+
+      document.getElementById("automationRows").innerHTML = AUTOMATION_LIST
+        .map(
+          (a) => `
+        <div class="automation-row glass-panel">
+          <span class="icon">${a.icon}</span>
+          <div class="info">
+            <p>${a.name}</p>
+            <p>${a.desc}</p>
+          </div>
+          <button class="toggle ${state[a.name] ? "on" : ""}" data-name="${a.name}" aria-pressed="${state[a.name]}">
+            <span class="knob"></span>
+          </button>
+        </div>`
+        )
+        .join("");
+
+      document.querySelectorAll(".toggle").forEach((btn) =>
+        btn.addEventListener("click", () => {
+          const name = btn.getAttribute("data-name");
+          state[name] = !state[name];
+          saveState();
+          showToast(`${name} ${state[name] ? "enabled" : "disabled"}`);
+          render();
+        })
+      );
+    }
+
+    render();
+  });
+</script>
+</body>
+</html>

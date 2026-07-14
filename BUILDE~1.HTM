@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Website Builder — ProTech AI</title>
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body data-page="builder.html">
+
+<header id="appHeader"></header>
+
+<main>
+  <div class="builder-wrap">
+    <p class="eyebrow">🌐 AI Website Builder</p>
+    <h1 style="font-size:32px;margin:16px 0 4px;">Describe it. AI builds it.</h1>
+    <p style="color:var(--muted);">Try: "Build me a restaurant website"</p>
+
+    <div id="progressTrack" class="progress-track hidden">
+      <div id="progressFill" class="progress-fill gradient-brand" style="width:0%;"></div>
+    </div>
+
+    <div id="stepPrompt" class="builder-card glass-panel">
+      <label style="font-weight:700;font-size:13.5px;display:block;margin-bottom:8px;">What do you want to build?</label>
+      <textarea id="promptInput" rows="3" placeholder="Build me a restaurant website" style="width:100%;border:1px solid var(--border);border-radius:12px;padding:12px 14px;font-size:14px;outline:none;resize:none;"></textarea>
+      <button id="startBtn" class="btn btn-primary btn-block btn-shine" style="margin-top:14px;">Start Building →</button>
+    </div>
+
+    <div id="stepQuestion" class="builder-card glass-panel hidden">
+      <p class="q-eyebrow" id="qProgress"></p>
+      <h2 class="q-label" id="qLabel"></h2>
+      <div class="q-row">
+        <input type="text" id="qInput" placeholder="" />
+        <button id="qNextBtn" class="btn btn-primary">Next</button>
+      </div>
+      <button id="qBackBtn" class="back-link hidden">← Back</button>
+    </div>
+
+    <div id="stepResult" class="hidden">
+      <div id="previewHero" class="preview-hero">
+        <p class="eyebrow-white">Live preview (demo)</p>
+        <h2 id="previewName">Your Restaurant</h2>
+        <p id="previewMenu" style="opacity:.9;font-size:14px;"></p>
+        <div class="preview-pills" id="previewPills"></div>
+      </div>
+
+      <div class="answers-list glass-panel">
+        <h3 style="margin:0;">Your answers</h3>
+        <dl id="answersList"></dl>
+      </div>
+
+      <div class="search-cta-row" style="margin-top:22px;">
+        <a href="marketplace.html" class="btn btn-primary btn-shine">Publish Website (demo)</a>
+        <button id="resetBtn" class="btn">Build Another</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer id="appFooter"></footer>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/common.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    let qIndex = 0;
+    const answers = {};
+
+    const promptStep = document.getElementById("stepPrompt");
+    const questionStep = document.getElementById("stepQuestion");
+    const resultStep = document.getElementById("stepResult");
+    const progressTrack = document.getElementById("progressTrack");
+    const progressFill = document.getElementById("progressFill");
+
+    function updateProgress() {
+      const pct = Math.round((qIndex / BUILDER_QUESTIONS.length) * 100);
+      progressFill.style.width = pct + "%";
+    }
+
+    function showQuestion() {
+      promptStep.classList.add("hidden");
+      resultStep.classList.add("hidden");
+      questionStep.classList.remove("hidden");
+      progressTrack.classList.remove("hidden");
+      const q = BUILDER_QUESTIONS[qIndex];
+      document.getElementById("qProgress").textContent = `Question ${qIndex + 1} of ${BUILDER_QUESTIONS.length}`;
+      document.getElementById("qLabel").textContent = q.label;
+      const qInput = document.getElementById("qInput");
+      qInput.value = answers[q.key] || "";
+      qInput.placeholder = q.placeholder;
+      qInput.focus();
+      document.getElementById("qBackBtn").classList.toggle("hidden", qIndex === 0);
+      updateProgress();
+    }
+
+    function extractColors(text) {
+      const found = Object.keys(COLOR_WORD_MAP).filter((c) => (text || "").toLowerCase().includes(c));
+      return found.length ? found.map((c) => COLOR_WORD_MAP[c]) : ["#2563eb", "#7c3aed"];
+    }
+
+    function showResult() {
+      questionStep.classList.add("hidden");
+      resultStep.classList.remove("hidden");
+      progressFill.style.width = "100%";
+
+      const colors = extractColors(answers.colors);
+      document.getElementById("previewHero").style.background = `linear-gradient(135deg, ${colors[0]}, ${colors[1] || colors[0]})`;
+      document.getElementById("previewName").textContent = answers.name || "Your Restaurant";
+      document.getElementById("previewMenu").textContent = answers.menu ? `Menu: ${answers.menu}` : "Grills · Appetizers · Drinks";
+
+      const pillDefs = [
+        ["payment", "💳"], ["delivery", "🚚"], ["whatsapp", "💬"], ["location", "📍"], ["language", "🌐"],
+      ];
+      document.getElementById("previewPills").innerHTML = pillDefs
+        .filter(([key]) => answers[key])
+        .map(([key, icon]) => `<span>${icon} ${answers[key]}</span>`)
+        .join("");
+
+      document.getElementById("answersList").innerHTML = BUILDER_QUESTIONS
+        .map(
+          (q) => `<div class="row"><dt>${q.label.replace("?", "")}</dt><dd>${answers[q.key] || "—"}</dd></div>`
+        )
+        .join("");
+    }
+
+    function next(value) {
+      const q = BUILDER_QUESTIONS[qIndex];
+      answers[q.key] = value;
+      if (qIndex + 1 < BUILDER_QUESTIONS.length) {
+        qIndex += 1;
+        showQuestion();
+      } else {
+        showResult();
+      }
+    }
+
+    document.getElementById("startBtn").addEventListener("click", () => {
+      const val = document.getElementById("promptInput").value.trim();
+      if (!val) { document.getElementById("promptInput").focus(); return; }
+      qIndex = 0;
+      showQuestion();
+    });
+
+    document.getElementById("qNextBtn").addEventListener("click", () => {
+      next(document.getElementById("qInput").value.trim());
+    });
+    document.getElementById("qInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); next(document.getElementById("qInput").value.trim()); }
+    });
+    document.getElementById("qBackBtn").addEventListener("click", () => {
+      if (qIndex > 0) { qIndex -= 1; showQuestion(); }
+    });
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      qIndex = 0;
+      Object.keys(answers).forEach((k) => delete answers[k]);
+      document.getElementById("promptInput").value = "";
+      resultStep.classList.add("hidden");
+      progressTrack.classList.add("hidden");
+      promptStep.classList.remove("hidden");
+    });
+  });
+</script>
+</body>
+</html>

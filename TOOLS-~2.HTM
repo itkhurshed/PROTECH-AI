@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Video Generator — ProTech AI</title>
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body data-page="tools-video.html">
+
+<header id="appHeader"></header>
+
+<main>
+  <div class="section" style="max-width:900px;">
+    <div class="section-head">
+      <p class="eyebrow">🎬 AI Video Generator</p>
+      <h2 style="margin-top:14px;">Turn a script into a video</h2>
+      <p>Describe the video you need — ProTech AI storyboards and renders it (demo output).</p>
+    </div>
+
+    <div class="tools-search">
+      <input type="text" id="promptInput" placeholder="e.g. 30-second promo for a new hotel opening" />
+    </div>
+
+    <div class="grid-tools" id="toolGrid"></div>
+
+    <div id="galleryWrap" class="hidden" style="margin-top:44px;">
+      <h3>Generated videos</h3>
+      <div class="gen-gallery" id="gallery"></div>
+    </div>
+  </div>
+</main>
+
+<footer id="appFooter"></footer>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/common.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const gradients = [
+      "linear-gradient(135deg,#6366f1,#a855f7)",
+      "linear-gradient(135deg,#f43f5e,#f97316)",
+      "linear-gradient(135deg,#14b8a6,#10b981)",
+      "linear-gradient(135deg,#2563eb,#06b6d4)",
+    ];
+    let items = [];
+    const grid = document.getElementById("toolGrid");
+    const promptInput = document.getElementById("promptInput");
+    const galleryWrap = document.getElementById("galleryWrap");
+    const gallery = document.getElementById("gallery");
+
+    grid.innerHTML = VIDEO_TOOLS.map(
+      (t) => `<button class="tool-btn card-hover glass-panel" data-label="${t.label}"><span class="icon">${t.icon}</span><span class="label">${t.label}</span></button>`
+    ).join("");
+
+    grid.querySelectorAll(".tool-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const label = btn.getAttribute("data-label");
+        btn.disabled = true;
+        showToast(`Generating "${label}"…`);
+        setTimeout(() => {
+          const promptVal = promptInput.value.trim();
+          items.unshift({
+            id: Date.now(),
+            label: promptVal ? `${label}: ${promptVal}` : label,
+            gradient: gradients[items.length % gradients.length],
+          });
+          renderGallery();
+          btn.disabled = false;
+        }, 900);
+      });
+    });
+
+    function renderGallery() {
+      galleryWrap.classList.toggle("hidden", items.length === 0);
+      gallery.innerHTML = items
+        .map(
+          (item) => `
+        <div class="gen-item">
+          <div class="gen-thumb" style="background:${item.gradient};">▶️<span class="dur">0:30</span></div>
+          <div class="gen-foot">
+            <span class="name" title="${item.label}">${item.label}</span>
+            <button class="ex-btn" data-id="${item.id}">Export</button>
+          </div>
+        </div>`
+        )
+        .join("");
+      gallery.querySelectorAll(".ex-btn").forEach((btn) =>
+        btn.addEventListener("click", () => showToast("Rendering final export (demo)"))
+      );
+    }
+  });
+</script>
+</body>
+</html>

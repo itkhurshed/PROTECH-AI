@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Smart Search — ProTech AI</title>
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body data-page="search.html">
+
+<header id="appHeader"></header>
+
+<main>
+  <div class="section" style="max-width:1000px;">
+    <form id="searchForm" class="ai-search-box glass-panel" autocomplete="off" style="box-shadow:var(--shadow);">
+      <span>🔍</span>
+      <input type="text" id="searchInput" placeholder="Search AI, documents, images, businesses, jobs, code…" />
+      <button type="submit" class="btn btn-primary" style="border-radius:999px;">Search</button>
+    </form>
+
+    <div class="category-strip" id="sourceTabs" style="justify-content:flex-start;padding-left:0;padding-right:0;"></div>
+
+    <div id="aiAnswerBox" class="glass-panel hidden" style="padding:22px;margin-top:10px;">
+      <div style="display:inline-flex;align-items:center;gap:6px;background:var(--primary-light);color:var(--primary);border-radius:999px;padding:5px 14px;font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;">✨ AI Answer</div>
+      <p id="aiAnswerText" style="font-size:14px;line-height:1.6;margin-top:12px;"></p>
+    </div>
+
+    <p id="resultsMeta" style="font-size:13.5px;color:var(--muted);margin-top:24px;"></p>
+    <div class="grid-cards" id="resultsGrid"></div>
+  </div>
+</main>
+
+<footer id="appFooter"></footer>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/common.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const params = new URLSearchParams(window.location.search);
+    let query = params.get("q") || "";
+    let source = params.get("source") || params.get("mode") || "ai";
+    if (source === "business") source = "businesses";
+
+    const input = document.getElementById("searchInput");
+    input.value = query;
+
+    function renderSources() {
+      document.getElementById("sourceTabs").innerHTML = SEARCH_SOURCES
+        .map(
+          (s) => `
+        <a href="#" data-key="${s.key}" style="${
+            s.key === source ? "border-color:var(--primary);background:var(--primary-light);color:var(--primary);" : ""
+          }">${s.icon} ${s.label}</a>`
+        )
+        .join("");
+      document.querySelectorAll("#sourceTabs a").forEach((a) =>
+        a.addEventListener("click", (e) => {
+          e.preventDefault();
+          source = a.getAttribute("data-key");
+          updateUrl();
+          render();
+        })
+      );
+    }
+
+    function updateUrl() {
+      const p = new URLSearchParams();
+      if (query) p.set("q", query);
+      p.set("source", source);
+      history.replaceState(null, "", `search.html?${p.toString()}`);
+    }
+
+    function render() {
+      renderSources();
+
+      const aiBox = document.getElementById("aiAnswerBox");
+      if (source === "ai") {
+        aiBox.classList.remove("hidden");
+        document.getElementById("aiAnswerText").textContent = query
+          ? `Here's a synthesized answer for "${query}" combining the top business systems and resources below. Connect a real AI model and search index to generate this live.`
+          : "Ask ProTech AI to build something, find a business, or answer a question — results update instantly across every source.";
+      } else {
+        aiBox.classList.add("hidden");
+      }
+
+      let results = PREMIUM_RESULTS;
+      if (query) {
+        const q = query.toLowerCase();
+        const filtered = PREMIUM_RESULTS.filter(
+          (r) =>
+            r.name.toLowerCase().includes(q) ||
+            r.category.toLowerCase().includes(q) ||
+            r.tags.some((t) => t.toLowerCase().includes(q))
+        );
+        if (filtered.length) results = filtered;
+      }
+
+      document.getElementById("resultsMeta").textContent = `${results.length} ${
+        source === "jobs" ? "jobs" : "results"
+      }${query ? ` for "${query}"` : ""}`;
+
+      document.getElementById("resultsGrid").innerHTML = results
+        .map(
+          (r) => `
+        <div class="result-card card-hover glass-panel">
+          <div class="top">
+            <div>
+              <h3>${r.name}</h3>
+              ${starsHtml(r.rating)}
+            </div>
+            <span class="badge badge-success">${r.badge}</span>
+          </div>
+          <p class="category">${r.category}</p>
+          <div class="tag-row">${r.tags.map((t) => `<span class="tag">${t}</span>`).join("")}</div>
+          <a href="marketplace.html" class="btn btn-primary btn-block">Open</a>
+        </div>`
+        )
+        .join("");
+    }
+
+    document.getElementById("searchForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      query = input.value.trim();
+      updateUrl();
+      render();
+    });
+
+    render();
+  });
+</script>
+</body>
+</html>

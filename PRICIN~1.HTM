@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pricing — ProTech AI</title>
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body data-page="pricing.html">
+
+<header id="appHeader"></header>
+
+<main>
+  <div class="section">
+    <div class="section-head">
+      <p class="eyebrow">💳 Pricing</p>
+      <h2 style="margin-top:14px;">Simple pricing, real automation</h2>
+      <p>Start free. Upgrade when you're ready to automate everything.</p>
+    </div>
+
+    <div class="pricing-grid" id="pricingGrid"></div>
+  </div>
+</main>
+
+<footer id="appFooter"></footer>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/common.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("pricingGrid").innerHTML = PRICING_TIERS
+      .map(
+        (tier) => `
+      <div class="price-card glass-panel ${tier.highlighted ? "highlighted gradient-brand" : ""}">
+        ${tier.highlighted ? `<span class="plan-badge">Most Popular</span>` : ""}
+        <h3>${tier.name}</h3>
+        <p class="tagline">${tier.tagline}</p>
+        <p class="amount">${tier.price}<span class="period">${tier.period}</span></p>
+        <ul>${tier.features.map((f) => `<li>✅ ${f}</li>`).join("")}</ul>
+        <a href="register.html" class="btn btn-block ${tier.highlighted ? "" : "btn-primary"}" style="${
+          tier.highlighted ? "background:#fff;color:var(--primary);border:none;" : ""
+        }">${tier.cta}</a>
+      </div>`
+      )
+      .join("");
+  });
+</script>
+</body>
+</html>

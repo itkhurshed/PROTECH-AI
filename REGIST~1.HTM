@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Register — ProTech AI</title>
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body data-page="register.html">
+
+<header id="appHeader"></header>
+
+<main>
+  <div class="auth-wrap">
+    <span class="brand-mark gradient-brand" style="width:48px;height:48px;font-size:16px;border-radius:16px;display:flex;align-items:center;justify-content:center;">PT</span>
+    <h1>Create your account</h1>
+    <p class="sub">Start free — no credit card required.</p>
+
+    <form id="registerForm" class="auth-card glass-panel" novalidate>
+      <div class="field" id="businessField">
+        <label>Business name</label>
+        <input type="text" id="business" placeholder="Al Salam Grill" required />
+        <p class="field-error">Please enter your business name.</p>
+      </div>
+      <div class="field" id="emailField">
+        <label>Email</label>
+        <input type="email" id="email" placeholder="you@company.com" required />
+        <p class="field-error">Please enter a valid email address.</p>
+      </div>
+      <div class="field" id="passwordField">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="••••••••" required minlength="6" />
+        <p class="field-error">Password must be at least 6 characters.</p>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block btn-shine">Create Free Account</button>
+
+      <div class="divider">or continue with</div>
+      <div class="oauth-row">
+        <button type="button" class="oauth-btn" id="googleBtn"><span class="oauth-icon">🔴</span> Continue with Google</button>
+        <button type="button" class="oauth-btn" id="appleBtn"><span class="oauth-icon">⚫</span> Continue with Apple</button>
+      </div>
+      <p class="oauth-note">Demo sign-up — connects instantly for this prototype. Real Google/Apple sign-up needs your own OAuth client credentials wired to a backend.</p>
+    </form>
+
+    <p class="auth-switch">Already have an account? <a href="login.html">Login</a></p>
+  </div>
+</main>
+
+<footer id="appFooter"></footer>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/common.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("registerForm");
+    const businessField = document.getElementById("businessField");
+    const emailField = document.getElementById("emailField");
+    const passwordField = document.getElementById("passwordField");
+    const businessInput = document.getElementById("business");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+
+    function validEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      let ok = true;
+      if (!businessInput.value.trim()) { businessField.classList.add("invalid"); ok = false; } else businessField.classList.remove("invalid");
+      if (!validEmail(emailInput.value.trim())) { emailField.classList.add("invalid"); ok = false; } else emailField.classList.remove("invalid");
+      if (passwordInput.value.length < 6) { passwordField.classList.add("invalid"); ok = false; } else passwordField.classList.remove("invalid");
+      if (!ok) return;
+
+      setSession({ name: businessInput.value.trim(), email: emailInput.value, provider: "email" });
+      showToast("Account created — welcome to ProTech AI!");
+      setTimeout(() => (window.location.href = "dashboard.html"), 700);
+    });
+
+    function oauthDemo(provider) {
+      showToast(`Connecting to ${provider}…`);
+      setTimeout(() => {
+        setSession({ name: `${provider} User`, email: `demo.${provider.toLowerCase()}@example.com`, provider });
+        showToast(`Signed up with ${provider} — redirecting…`);
+        setTimeout(() => (window.location.href = "dashboard.html"), 600);
+      }, 900);
+    }
+    document.getElementById("googleBtn").addEventListener("click", () => oauthDemo("Google"));
+    document.getElementById("appleBtn").addEventListener("click", () => oauthDemo("Apple"));
+  });
+</script>
+</body>
+</html>

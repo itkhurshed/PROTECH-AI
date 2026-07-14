@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Business Marketplace — ProTech AI</title>
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body data-page="marketplace.html">
+
+<header id="appHeader"></header>
+
+<main>
+  <div class="section">
+    <div class="section-head">
+      <p class="eyebrow">🛍️ Business Marketplace</p>
+      <h2 style="margin-top:14px;">Ready-made systems, built for you</h2>
+      <p>Deploy a fully working business system in minutes — website, ERP, POS, and more.</p>
+    </div>
+
+    <div class="market-search">
+      <input type="text" id="marketSearch" placeholder="Search the marketplace…" />
+    </div>
+
+    <div class="grid-cards" id="marketGrid" style="margin-top:34px;"></div>
+    <p id="emptyState" class="hidden" style="text-align:center;color:var(--muted);margin-top:30px;"></p>
+  </div>
+</main>
+
+<footer id="appFooter"></footer>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/common.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const searchInput = document.getElementById("marketSearch");
+    const grid = document.getElementById("marketGrid");
+    const empty = document.getElementById("emptyState");
+
+    function render() {
+      const q = searchInput.value.trim().toLowerCase();
+      const filtered = MARKETPLACE_ITEMS.filter(
+        (item) => item.name.toLowerCase().includes(q) || item.desc.toLowerCase().includes(q)
+      );
+
+      grid.innerHTML = filtered
+        .map(
+          (item) => `
+        <div class="market-card card-hover glass-panel">
+          <div class="head">
+            <span class="icon">${item.icon}</span>
+            <div>
+              <h3 style="margin:0;font-size:15.5px;">${item.name}</h3>
+              ${starsHtml(item.rating)}
+            </div>
+          </div>
+          <p class="desc">${item.desc}</p>
+          <div class="foot">
+            <span class="price">${item.price}</span>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-sm demo-btn" data-name="${item.name}">Demo</button>
+              <button class="btn btn-sm btn-primary buy-btn" data-name="${item.name}">Buy</button>
+            </div>
+          </div>
+        </div>`
+        )
+        .join("");
+
+      empty.classList.toggle("hidden", filtered.length !== 0);
+      empty.textContent = `No systems match "${searchInput.value}".`;
+
+      grid.querySelectorAll(".demo-btn").forEach((btn) =>
+        btn.addEventListener("click", () => showToast(`Opening free demo of ${btn.getAttribute("data-name")}…`))
+      );
+      grid.querySelectorAll(".buy-btn").forEach((btn) =>
+        btn.addEventListener("click", () => addToCart(btn.getAttribute("data-name")))
+      );
+    }
+
+    searchInput.addEventListener("input", render);
+    render();
+  });
+</script>
+</body>
+</html>

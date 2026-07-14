@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin Dashboard — ProTech AI</title>
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body data-page="admin-dashboard.html">
+
+<header id="appHeader"></header>
+
+<main>
+  <div class="admin-shell">
+    <aside class="admin-side">
+      <a href="#overview" class="active" data-tab="overview">📊 Overview</a>
+      <a href="#users" data-tab="users">👥 Users &amp; Businesses</a>
+      <a href="#marketplace" data-tab="marketplace">🛍️ Marketplace</a>
+      <a href="#automation" data-tab="automation">⚙️ Automation</a>
+      <a href="#support" data-tab="support">🎫 Support</a>
+      <a href="#settings" data-tab="settings">🔧 Settings</a>
+    </aside>
+
+    <div class="admin-main">
+      <div class="admin-topbar">
+        <div>
+          <h1 style="margin:0;font-size:22px;">Admin Dashboard</h1>
+          <p style="margin:4px 0 0;color:var(--muted);font-size:13px;">Signed in as <strong id="adminUserLabel"></strong></p>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <a href="index.html" class="btn btn-sm">View Site</a>
+          <button class="btn btn-sm" id="adminLogoutBtn">Logout</button>
+        </div>
+      </div>
+
+      <div class="grid-stats" id="adminStats"></div>
+
+      <div class="glass-panel" style="padding:22px;margin-top:30px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+          <h3 style="margin:0;">Users &amp; Businesses</h3>
+          <input type="text" id="userSearch" placeholder="Search users…" style="border:1px solid var(--border);border-radius:999px;padding:8px 14px;font-size:13px;outline:none;" />
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="admin-table">
+            <thead>
+              <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Action</th></tr>
+            </thead>
+            <tbody id="usersTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="glass-panel" style="padding:22px;margin-top:24px;">
+        <h3 style="margin:0 0 6px;">Site owner &amp; support</h3>
+        <p style="color:var(--muted);font-size:13.5px;margin:0;">
+          Engineer <strong id="ownerNameLabel"></strong> · 📞 <a href="#" id="ownerPhoneLabel" style="color:var(--primary);"></a> · ✉️ <a href="#" id="ownerEmailLabel" style="color:var(--primary);"></a>
+        </p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer id="appFooter"></footer>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/common.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    requireAdminAuth();
+    const session = getAdminSession();
+    if (!session) return;
+
+    document.getElementById("adminUserLabel").textContent = session.username;
+    document.getElementById("ownerNameLabel").textContent = SITE.ownerName;
+    const phoneEl = document.getElementById("ownerPhoneLabel");
+    phoneEl.textContent = SITE.supportPhone;
+    phoneEl.href = "tel:+" + SITE.supportPhoneRaw;
+    const emailEl = document.getElementById("ownerEmailLabel");
+    emailEl.textContent = SITE.supportEmail;
+    emailEl.href = "mailto:" + SITE.supportEmail;
+
+    document.getElementById("adminStats").innerHTML = DASHBOARD_STATS
+      .map(
+        (s) => `
+      <div class="stat-card glass-panel">
+        <div class="top">
+          <span style="font-size:20px;">${s.icon}</span>
+          ${s.trend ? `<span class="trend ${s.trend.startsWith("-") ? "down" : "up"}">${s.trend}</span>` : ""}
+        </div>
+        <p class="value">${s.value}</p>
+        <p class="label">${s.label}</p>
+      </div>`
+      )
+      .join("");
+
+    function statusPillClass(status) {
+      if (status === "active") return "status-active";
+      if (status === "pending") return "status-pending";
+      return "status-blocked";
+    }
+
+    function renderUsers(filter) {
+      const q = (filter || "").toLowerCase();
+      const rows = ADMIN_USERS.filter(
+        (u) => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || u.role.toLowerCase().includes(q)
+      );
+      document.getElementById("usersTableBody").innerHTML = rows
+        .map(
+          (u, i) => `
+        <tr>
+          <td>${u.name}</td>
+          <td>${u.email}</td>
+          <td>${u.role}</td>
+          <td><span class="status-pill ${statusPillClass(u.status)}">${u.status}</span></td>
+          <td>
+            <button class="btn btn-sm toggle-status-btn" data-idx="${i}">
+              ${u.status === "blocked" ? "Unblock" : "Block"}
+            </button>
+          </td>
+        </tr>`
+        )
+        .join("");
+
+      document.querySelectorAll(".toggle-status-btn").forEach((btn) =>
+        btn.addEventListener("click", () => {
+          const idx = Number(btn.getAttribute("data-idx"));
+          const user = rows[idx];
+          user.status = user.status === "blocked" ? "active" : "blocked";
+          showToast(`${user.name} ${user.status === "blocked" ? "blocked" : "unblocked"} (demo)`);
+          renderUsers(document.getElementById("userSearch").value);
+        })
+      );
+    }
+    renderUsers("");
+    document.getElementById("userSearch").addEventListener("input", (e) => renderUsers(e.target.value));
+
+    document.querySelectorAll(".admin-side a[data-tab]").forEach((link) => {
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        document.querySelectorAll(".admin-side a").forEach((a) => a.classList.remove("active"));
+        link.classList.add("active");
+        showToast(`Section: ${link.textContent.trim()} (demo — single-page prototype)`);
+      });
+    });
+
+    document.getElementById("adminLogoutBtn").addEventListener("click", () => {
+      clearAdminSession();
+      showToast("Logged out of admin portal");
+      setTimeout(() => (window.location.href = "admin-login.html"), 500);
+    });
+  });
+</script>
+</body>
+</html>

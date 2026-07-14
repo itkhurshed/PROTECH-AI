@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Image Generator — ProTech AI</title>
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body data-page="tools-image.html">
+
+<header id="appHeader"></header>
+
+<main>
+  <div class="section" style="max-width:900px;">
+    <div class="section-head">
+      <p class="eyebrow">🎨 AI Image Generator</p>
+      <h2 style="margin-top:14px;">Design assets in seconds</h2>
+      <p>Describe your business, pick an asset type, and generate a ready-to-use design (demo output).</p>
+    </div>
+
+    <div class="tools-search">
+      <input type="text" id="promptInput" placeholder="e.g. Modern grocery store, green and white" />
+    </div>
+
+    <div class="grid-tools" id="toolGrid"></div>
+
+    <div id="galleryWrap" class="hidden" style="margin-top:44px;">
+      <h3>Generated assets</h3>
+      <div class="gen-gallery" id="gallery"></div>
+    </div>
+  </div>
+</main>
+
+<footer id="appFooter"></footer>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/common.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const gradients = [
+      "linear-gradient(135deg,#3b82f6,#a855f7)",
+      "linear-gradient(135deg,#10b981,#3b82f6)",
+      "linear-gradient(135deg,#a855f7,#ec4899)",
+      "linear-gradient(135deg,#f59e0b,#ef4444)",
+      "linear-gradient(135deg,#06b6d4,#2563eb)",
+    ];
+    let items = [];
+    const grid = document.getElementById("toolGrid");
+    const promptInput = document.getElementById("promptInput");
+    const galleryWrap = document.getElementById("galleryWrap");
+    const gallery = document.getElementById("gallery");
+
+    grid.innerHTML = IMAGE_TOOLS.map(
+      (t, i) => `<button class="tool-btn card-hover glass-panel" data-label="${t.label}"><span class="icon">${t.icon}</span><span class="label">${t.label}</span></button>`
+    ).join("");
+
+    grid.querySelectorAll(".tool-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const label = btn.getAttribute("data-label");
+        btn.disabled = true;
+        showToast(`Generating "${label}"…`);
+        setTimeout(() => {
+          const promptVal = promptInput.value.trim();
+          items.unshift({
+            id: Date.now(),
+            label: promptVal ? `${label}: ${promptVal}` : label,
+            gradient: gradients[items.length % gradients.length],
+          });
+          renderGallery();
+          btn.disabled = false;
+        }, 800);
+      });
+    });
+
+    function renderGallery() {
+      galleryWrap.classList.toggle("hidden", items.length === 0);
+      gallery.innerHTML = items
+        .map(
+          (item) => `
+        <div class="gen-item">
+          <div class="gen-thumb" style="background:${item.gradient};">🖼️</div>
+          <div class="gen-foot">
+            <span class="name" title="${item.label}">${item.label}</span>
+            <button class="dl-btn" data-id="${item.id}">Download</button>
+          </div>
+        </div>`
+        )
+        .join("");
+      gallery.querySelectorAll(".dl-btn").forEach((btn) =>
+        btn.addEventListener("click", () => showToast("Downloaded (demo)"))
+      );
+    }
+  });
+</script>
+</body>
+</html>
